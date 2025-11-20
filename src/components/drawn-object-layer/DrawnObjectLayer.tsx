@@ -16,13 +16,13 @@ interface DrawnObjectLayerProps {
 export function DrawnObjectLayer({width, height}: DrawnObjectLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const {drawnObjects, currentObject, selectedTool, updateObject, addToHistory} = useDrawingStore(
+  const {drawnObjects, currentObject, selectedTool, updateObject, commitObjectUpdate} = useDrawingStore(
     useShallow((state) => ({
       drawnObjects: state.drawnObjects,
       currentObject: state.currentObject,
       selectedTool: state.selectedTool,
       updateObject: state.updateObject,
-      addToHistory: state.addToHistory,
+      commitObjectUpdate: state.commitObjectUpdate,
     })),
   )
 
@@ -75,8 +75,8 @@ export function DrawnObjectLayer({width, height}: DrawnObjectLayerProps) {
   const textObjects = drawnObjects.filter((obj): obj is TextObject => obj instanceof TextObject)
 
   // Wrapper for onDragEnd to save history
-  const handleDragEnd = () => {
-    addToHistory(drawnObjects)
+  const handleDragEnd = (oldObj: TextObject, newObj: TextObject) => {
+    commitObjectUpdate(oldObj, newObj)
   }
 
   return (

@@ -1,17 +1,28 @@
 import {create} from "zustand"
 import type {DrawingObject, ToolType} from "../../domain/types"
+import {CommandManager} from "../commands/CommandManager"
+import {AddObjectCommand} from "../../domain/commands/AddObjectCommand"
+import {UpdateObjectCommand} from "../../domain/commands/UpdateObjectCommand"
+
+const commandManager = new CommandManager()
 
 interface DrawingState {
   // State
   drawnObjects: DrawingObject[]
-  history: DrawingObject[][]
-  historyIndex: number
   currentObject: DrawingObject | null
   selectedColor: string
   selectedTool: ToolType
   lineWidth: number
   backgroundImage: string | null
   canvasSize: {width: number; height: number}
+
+  // History State
+  canUndo: boolean
+  canRedo: boolean
+  // Deprecated but kept for compatibility during migration if needed,
+  // but we will update components to use canUndo/canRedo directly.
+  // history: DrawingObject[][];
+  // historyIndex: number;
 
   // Actions
   setDrawnObjects: (objects: DrawingObject[]) => void
@@ -25,23 +36,23 @@ interface DrawingState {
   // Domain Logic
   addObject: (object: DrawingObject) => void
   updateObject: (updatedObject: DrawingObject) => void
-  addToHistory: (objects: DrawingObject[]) => void
+  commitObjectUpdate: (oldObject: DrawingObject, newObject: DrawingObject) => void
   undo: () => void
   redo: () => void
   reset: () => void
 }
 
-export const useDrawingStore = create<DrawingState>((set, get) => ({
+export const useDrawingStore = create<DrawingState>((set) => ({
   // Initial State
   drawnObjects: [],
-  history: [[]],
-  historyIndex: 0,
   currentObject: null,
   selectedColor: "#000000",
   selectedTool: "freehand",
   lineWidth: 5,
   backgroundImage: null,
   canvasSize: {width: 800, height: 600},
+  canUndo: false,
+  canRedo: false,
 
   // Basic Setters
   setDrawnObjects: (objects) => set({drawnObjects: objects}),
@@ -54,57 +65,60 @@ export const useDrawingStore = create<DrawingState>((set, get) => ({
 
   // Complex Actions
   addObject: (object) => {
-    const {drawnObjects, addToHistory} = get()
-    const newObjects = [...drawnObjects, object]
-    set({drawnObjects: newObjects, currentObject: null})
-    addToHistory(newObjects)
+    const command = new AddObjectCommand(
+      object,
+      (obj) => set((state) => ({drawnObjects: [...state.drawnObjects, obj]})),
+      (id) => set((state) => ({drawnObjects: state.drawnObjects.filter((o) => o.id !== id)})),
+    )
+    commandManager.execute(command)
+    set({
+      currentObject: null,
+      canUndo: commandManager.canUndo(),
+      canRedo: commandManager.canRedo(),
+    })
   },
 
   updateObject: (updatedObject) => {
-    const {drawnObjects} = get()
-    const newObjects = drawnObjects.map((obj) => (obj.id === updatedObject.id ? updatedObject : obj))
-    set({drawnObjects: newObjects})
+    set((state) => ({
+      drawnObjects: state.drawnObjects.map((obj) => (obj.id === updatedObject.id ? updatedObject : obj)),
+    }))
   },
 
-  addToHistory: (objects) => {
-    const {history, historyIndex} = get()
-    const newHistory = history.slice(0, historyIndex + 1)
-    newHistory.push(objects)
+  commitObjectUpdate: (oldObject, newObject) => {
+    const command = new UpdateObjectCommand(oldObject, newObject, (obj) =>
+      set((state) => ({
+        drawnObjects: state.drawnObjects.map((o) => (o.id === obj.id ? obj : o)),
+      })),
+    )
+    commandManager.execute(command)
     set({
-      history: newHistory,
-      historyIndex: newHistory.length - 1,
+      canUndo: commandManager.canUndo(),
+      canRedo: commandManager.canRedo(),
     })
   },
 
   undo: () => {
-    const {history, historyIndex} = get()
-    if (historyIndex > 0) {
-      const newIndex = historyIndex - 1
-      const previousObjects = history[newIndex]
-      set({
-        historyIndex: newIndex,
-        drawnObjects: previousObjects,
-      })
-    }
+    commandManager.undo()
+    set({
+      canUndo: commandManager.canUndo(),
+      canRedo: commandManager.canRedo(),
+    })
   },
 
   redo: () => {
-    const {history, historyIndex} = get()
-    if (historyIndex < history.length - 1) {
-      const newIndex = historyIndex + 1
-      const nextObjects = history[newIndex]
-      set({
-        historyIndex: newIndex,
-        drawnObjects: nextObjects,
-      })
-    }
+    commandManager.redo()
+    set({
+      canUndo: commandManager.canUndo(),
+      canRedo: commandManager.canRedo(),
+    })
   },
 
   reset: () => {
+    commandManager.reset()
     set({
       drawnObjects: [],
-      history: [[]],
-      historyIndex: 0,
+      canUndo: false,
+      canRedo: false,
     })
   },
 }))

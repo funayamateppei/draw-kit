@@ -12,17 +12,14 @@ interface FloatingToolbarProps {
 }
 
 export function FloatingToolbar({onImageUpload}: FloatingToolbarProps) {
-  const {undo, redo, historyIndex, history} = useDrawingStore(
+  const {undo, redo, canUndo, canRedo} = useDrawingStore(
     useShallow((state) => ({
       undo: state.undo,
       redo: state.redo,
-      historyIndex: state.historyIndex,
-      history: state.history,
+      canUndo: state.canUndo,
+      canRedo: state.canRedo,
     })),
   )
-
-  const canUndo = historyIndex > 0
-  const canRedo = historyIndex < history.length - 1
 
   return (
     <div className="fixed bottom-4 right-4 flex flex-col gap-3 z-50" onClick={(e) => e.stopPropagation()}>

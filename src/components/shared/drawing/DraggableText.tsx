@@ -7,7 +7,7 @@ interface DraggableTextProps {
   canvasWidth: number
   canvasHeight: number
   onUpdate: (updatedObject: TextObject) => void
-  onDragEnd?: () => void
+  onDragEnd?: (oldObject: TextObject, newObject: TextObject) => void
   isOverlay?: boolean
   isDraggable?: boolean
 }
@@ -56,10 +56,14 @@ export function DraggableText({
     }
 
     const handleMouseUp = () => {
+      if (isDragging && objectStartRef.current) {
+        const oldPoint = new Point(objectStartRef.current.x, objectStartRef.current.y)
+        const oldObject = object.updatePosition(oldPoint)
+        onDragEnd?.(oldObject, object)
+      }
       setIsDragging(false)
       dragStartRef.current = null
       objectStartRef.current = null
-      onDragEnd?.()
     }
 
     if (isDragging) {
