@@ -1,1 +1,1 @@
-export * from "./DrawKit"
+export {default} from "./DrawKit"

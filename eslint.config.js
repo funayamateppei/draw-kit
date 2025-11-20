@@ -19,5 +19,22 @@ export default tseslint.config([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@mui/material", "@mui/material/*"],
+              message: "MUI components are not allowed. Only icons from @mui/icons-material are permitted.",
+            },
+            {
+              group: ["@emotion/react", "@emotion/styled"],
+              message: "Emotion styling is not allowed. Use Tailwind CSS instead.",
+            },
+          ],
+        },
+      ],
+    },
   },
 ])
