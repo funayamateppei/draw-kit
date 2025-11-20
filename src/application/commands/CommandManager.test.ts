@@ -3,7 +3,13 @@ import {CommandManager} from "./CommandManager"
 import type {ICommand} from "../../domain/commands/ICommand"
 
 class MockCommand implements ICommand {
-  constructor(private executeFn: () => void, private undoFn: () => void) {}
+  private executeFn: () => void
+  private undoFn: () => void
+
+  constructor(executeFn: () => void, undoFn: () => void) {
+    this.executeFn = executeFn
+    this.undoFn = undoFn
+  }
 
   execute() {
     this.executeFn()
