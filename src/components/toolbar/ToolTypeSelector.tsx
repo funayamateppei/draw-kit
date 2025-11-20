@@ -6,12 +6,12 @@ import {
   TextFields,
   CleaningServices,
   PanTool,
-} from '@mui/icons-material';
-import type { ToolType } from '../../domain/types';
-import { useDrawingStore } from '../../application/store/useDrawingStore';
+} from "@mui/icons-material"
+import type {ToolType} from "../../domain/types"
+import {useDrawingStore} from "../../application/store/useDrawingStore"
 
 interface ToolTypeSelectorProps {
-  tools: ToolType[];
+  tools: ToolType[]
 }
 
 const TOOL_ICONS: Record<ToolType, React.ReactNode> = {
@@ -21,8 +21,8 @@ const TOOL_ICONS: Record<ToolType, React.ReactNode> = {
   arrow: <ArrowRightAlt fontSize="small" />,
   text: <TextFields fontSize="small" />,
   eraser: <CleaningServices fontSize="small" />,
-  hand: <PanTool fontSize="small" />,
-};
+  hand: <PanTool fontSize="small" className="-ml-1" />,
+}
 
 export function ToolTypeSelector({ tools }: ToolTypeSelectorProps) {
   const selectedTool = useDrawingStore((state) => state.selectedTool);

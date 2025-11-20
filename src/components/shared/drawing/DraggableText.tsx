@@ -45,12 +45,12 @@ export function DraggableText({
       let newX = objectStartRef.current.x + dx
       let newY = objectStartRef.current.y + dy
 
-      // Boundary checks (simple approximation, assuming text width/height)
-      // Since we don't know exact text metrics here easily without canvas context,
-      // we'll just keep the top-left point within bounds for now.
-      // A better approach would be to measure text.
-      newX = Math.max(0, Math.min(newX, canvasWidth))
-      newY = Math.max(0, Math.min(newY, canvasHeight))
+      const elementWidth = textRef.current?.offsetWidth || 0
+      const elementHeight = textRef.current?.offsetHeight || 0
+
+      // Boundary checks
+      newX = Math.max(0, Math.min(newX, canvasWidth - elementWidth))
+      newY = Math.max(0, Math.min(newY, canvasHeight - elementHeight))
 
       onUpdate(object.updatePosition(new Point(newX, newY)))
     }
